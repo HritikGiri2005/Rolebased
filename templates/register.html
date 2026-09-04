@@ -1,0 +1,128 @@
+{% extends 'Appn/base.html' %}
+
+
+{% block title %}
+Register
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-6">
+
+            <div class="card shadow">
+
+                <div class="card-body">
+
+                    <h3 class="text-center mb-4">
+                        Register
+                    </h3>
+
+
+                    <form method="POST">
+
+                        {% csrf_token %}
+
+                        {{ form.non_field_errors }}
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Username
+                            </label>
+
+                            {{ form.username }}
+
+                            {{ form.username.errors }}
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Email
+                            </label>
+
+                            {{ form.email }}
+
+                            {{ form.email.errors }}
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Password
+                            </label>
+
+                            {{ form.password }}
+
+                            {{ form.password.errors }}
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Confirm Password
+                            </label>
+
+                            {{ form.confirm_password }}
+
+                            {{ form.confirm_password.errors }}
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Role
+                            </label>
+
+                            {{ form.role }}
+
+                            {{ form.role.errors }}
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-success w-100"
+                        >
+                            Register
+                        </button>
+
+                    </form>
+
+
+                    <div class="text-center mt-3">
+
+                        Already have an account?
+
+                        <a href="{% url 'login' %}">
+                            Login
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

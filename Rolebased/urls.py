@@ -20,5 +20,45 @@ from rolebasedapp import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.test),
+    path(
+        '',
+        views.dashboard_view,
+        name='dashboard'
+    ),
+
+    path(
+        'login/',
+        views.login_view,
+        name='login'
+    ),
+
+    path(
+        'logout/',
+        views.logout_view,
+        name='logout'
+    ),
+
+    path(
+        'register/',
+        views.register_view,
+        name='register'
+    ),
+
+    path(
+        'asset/',
+        views.asset_dashboard,
+        name='asset'
+    ),
+
+    path(
+        'rack/',
+        views.rack_dashboard,
+        name='rack'
+    ),
+
+    path(
+        'all/',
+        views.all_dashboard,
+        name='all'
+    ),
 ]
