@@ -1,20 +1,53 @@
-{% extends 'Appn/base.html' %}
-
+{% extends 'base.html' %}
 
 {% block title %}
 All Data
 {% endblock %}
 
-
 {% block content %}
 
-<div class="kibana-container">
+<div class="container-fluid">
 
-    <iframe
+    <!-- Asset Dashboard -->
+
+    <div class="mb-4">
+
+        <h4 class="mb-3">
+            Asset Data
+        </h4>
+
+        <div style="width: 100%; height: 600px;">
+
+            <iframe
         class="kibana-frame"
-        src="PASTE_YOUR_KIBANA_ALL_IFRAME_URL_HERE"
+        src="http://localhost:5601/app/dashboards#/view/112ddd7b-285a-4742-bbe8-056aa800d2c4?embed=true&_g=%28refreshInterval%3A%28pause%3A%21t%2Cvalue%3A60000%29%2Ctime%3A%28from%3Anow-1y%2Fd%2Cto%3Anow%29%29&show-time-filter=true&hide-filter-bar=true"
         allowfullscreen>
     </iframe>
+
+        </div>
+
+    </div>
+
+
+    <!-- Rack Dashboard -->
+
+    <div class="mb-4">
+
+        <h4 class="mb-3">
+            Rack Data
+        </h4>
+
+        <div style="width: 100%; height: 600px;">
+
+            <iframe
+        class="kibana-frame"
+        src="http://localhost:5601/app/dashboards#/view/1dbbb4d0-7727-4c60-afe2-3075d8c9c547?embed=true&_g=%28refreshInterval%3A%28pause%3A%21t%2Cvalue%3A60000%29%2Ctime%3A%28from%3Anow-1y%2Fd%2Cto%3Anow%29%29&show-time-filter=true&hide-filter-bar=true" height="600" width="800"
+        allowfullscreen>
+    </iframe>
+
+        </div>
+
+    </div>
 
 </div>
 

@@ -115,15 +115,32 @@ def dashboard_view(request):
         role = request.user.profile.role
 
     except UserProfile.DoesNotExist:
-        role = None
+        messages.error(
+            request,
+            'No role has been assigned to your account.'
+        )
+        return redirect('logout')
 
-    return render(
-        request,
-        'dashboard.html',
-        {
-            'role': role
-        }
-    )
+    # Admin → Asset dashboard by default
+    if role == 'admin':
+        return redirect('asset')
+
+    # Asset user → Asset dashboard
+    elif role == 'asset':
+        return redirect('asset')
+
+    # Rack user → Rack dashboard
+    elif role == 'rack':
+        return redirect('rack')
+
+    # Unknown role
+    else:
+        messages.error(
+            request,
+            'Invalid user role.'
+        )
+
+        return redirect('logout')
 
 
 # -----------------------------

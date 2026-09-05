@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+Rack Data
+{% endblock %}
+
+
+{% block content %}
+
+<div class="kibana-container">
+
+    <iframe
+        class="kibana-frame"
+        src="http://localhost:5601/app/dashboards#/view/1dbbb4d0-7727-4c60-afe2-3075d8c9c547?embed=true&_g=%28refreshInterval%3A%28pause%3A%21t%2Cvalue%3A60000%29%2Ctime%3A%28from%3Anow-1y%2Fd%2Cto%3Anow%29%29&show-time-filter=true&hide-filter-bar=true" height="600" width="800"
+        allowfullscreen>
+    </iframe>
+
+</div>
+
+{% endblock %}

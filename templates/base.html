@@ -1,233 +1,525 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>
-        {% block title %}
-        Dashboard
-        {% endblock %}
-    </title>
+<title>
+    {% block title %}
+    Dashboard
+    {% endblock %}
+</title>
 
-    <!-- Bootstrap -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+<!-- Bootstrap -->
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
 
-    <style>
+<style>
 
-        body {
-            margin: 0;
-            background-color: #f5f6f8;
-        }
+    body {
+        margin: 0;
+        background-color: #f5f6f8;
+    }
 
-        .navbar {
-            height: 60px;
-        }
 
-        .dashboard-container {
-            padding: 20px;
-        }
+    /* =========================
+       NAVBAR
+    ========================= */
 
-        .kibana-container {
-            width: 100%;
-            height: calc(100vh - 120px);
-            position: relative;
-        }
+    .navbar {
+        height: 60px;
+    }
 
-        .kibana-frame {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
 
-        .fullscreen-btn {
-            cursor: pointer;
-        }
+    /* =========================
+       HAMBURGER BUTTON
+    ========================= */
 
-    </style>
+    .hamburger-btn {
+        width: 35px;
+        height: 35px;
+
+        border: none;
+        background: transparent;
+
+        padding: 5px;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+
+        cursor: pointer;
+    }
+
+    .hamburger-btn span {
+        display: block;
+
+        width: 24px;
+        height: 2px;
+
+        background-color: white;
+
+        border-radius: 2px;
+    }
+
+
+    /* =========================
+       SIDEBAR
+    ========================= */
+
+    .sidebar {
+        position: fixed;
+
+        top: 0;
+        left: -280px;
+
+        width: 280px;
+        height: 100vh;
+
+        background-color: #212529;
+
+        z-index: 1050;
+
+        transition: left 0.3s ease;
+
+        box-shadow: 3px 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+
+    /* Sidebar open */
+
+    .sidebar.open {
+        left: 0;
+    }
+
+
+    /* =========================
+       SIDEBAR HEADER
+    ========================= */
+
+    .sidebar-header {
+        height: 60px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        padding: 0 20px;
+
+        color: white;
+
+        font-size: 18px;
+        font-weight: 500;
+
+        border-bottom: 1px solid #444;
+    }
+
+
+    /* Close button */
+
+    .close-btn {
+        border: none;
+
+        background: transparent;
+
+        color: white;
+
+        font-size: 28px;
+
+        cursor: pointer;
+    }
+
+
+    /* =========================
+       SIDEBAR MENU
+    ========================= */
+
+    .sidebar-menu {
+        padding-top: 10px;
+    }
+
+
+    .sidebar-item {
+        display: block;
+
+        padding: 12px 20px;
+
+        color: #ddd;
+
+        text-decoration: none;
+
+        font-size: 15px;
+
+        transition: background-color 0.2s;
+    }
+
+
+    .sidebar-item:hover {
+        background-color: #343a40;
+
+        color: white;
+    }
+
+
+    /* =========================
+       SIDEBAR OVERLAY
+    ========================= */
+
+    .sidebar-overlay {
+        display: none;
+
+        position: fixed;
+
+        top: 0;
+        left: 0;
+
+        width: 100%;
+        height: 100%;
+
+        background: rgba(0, 0, 0, 0.4);
+
+        z-index: 1040;
+    }
+
+
+    .sidebar-overlay.show {
+        display: block;
+    }
+
+
+    /* =========================
+       DASHBOARD
+    ========================= */
+
+    .dashboard-container {
+        padding: 20px;
+    }
+
+
+    .kibana-container {
+        width: 100%;
+
+        height: calc(100vh - 120px);
+
+        position: relative;
+    }
+
+
+    .kibana-frame {
+        width: 100%;
+        height: 100%;
+
+        border: none;
+    }
+
+
+    /* =========================
+       FULLSCREEN
+    ========================= */
+
+    .fullscreen-btn {
+        cursor: pointer;
+    }
+
+</style>
 
 </head>
 
-
 <body>
 
-
-<!-- NAVBAR -->
+<!-- =========================
+     NAVBAR
+========================= -->
 
 <nav class="navbar navbar-dark bg-dark px-3">
 
-    <div class="container-fluid">
+<div class="container-fluid">
 
-        <span class="navbar-brand">
+
+    <!-- LEFT SIDE -->
+
+    <div class="d-flex align-items-center">
+
+        {% if user.is_authenticated %}
+
+        <!-- HAMBURGER BUTTON -->
+
+        <button
+            class="hamburger-btn me-2"
+            type="button"
+            onclick="toggleSidebar()"
+            aria-label="Open dashboard menu"
+        >
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </button>
+
+        {% endif %}
+
+
+        <!-- TITLE -->
+
+        <span class="navbar-brand mb-0">
+
             Data Center Dashboard
+
         </span>
-
-
-        <div class="d-flex align-items-center gap-2">
-
-            {% if user.is_authenticated %}
-
-                <button
-                    class="btn btn-outline-light"
-                    onclick="toggleFullscreen()"
-                >
-                    ⛶ Fullscreen
-                </button>
-
-                <a
-                    href="{% url 'logout' %}"
-                    class="btn btn-danger"
-                >
-                    Logout
-                </a>
-
-            {% else %}
-
-                <a
-                    href="{% url 'login' %}"
-                    class="btn btn-primary"
-                >
-                    Login
-                </a>
-
-            {% endif %}
-
-        </div>
 
     </div>
 
-</nav>
+
+    <!-- RIGHT SIDE -->
+
+    <div class="d-flex align-items-center gap-2">
+
+        {% if user.is_authenticated %}
 
 
+            <!-- FULLSCREEN -->
 
-<!-- BREADCRUMB -->
+            <button
+                class="btn btn-outline-light btn-sm"
+                onclick="toggleFullscreen()"
+            >
 
-{% if user.is_authenticated %}
+                ⛶ Fullscreen
 
-<div class="container-fluid mt-3 px-4">
-
-    <div class="dropdown">
-
-        <button
-            class="btn btn-outline-dark dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-        >
-            Dashboard
-        </button>
+            </button>
 
 
-        <ul class="dropdown-menu">
+            <!-- LOGOUT -->
 
-            {% if role == 'admin' or role == 'asset' %}
+            <a
+                href="{% url 'logout' %}"
+                class="btn btn-danger btn-sm"
+            >
 
-            <li>
-                <a
-                    class="dropdown-item"
-                    href="{% url 'asset' %}"
-                >
-                    Asset Data
-                </a>
-            </li>
+                Logout
 
-            {% endif %}
+            </a>
 
 
-            {% if role == 'admin' or role == 'rack' %}
-
-            <li>
-                <a
-                    class="dropdown-item"
-                    href="{% url 'rack' %}"
-                >
-                    Rack Data
-                </a>
-            </li>
-
-            {% endif %}
+        {% else %}
 
 
-            {% if role == 'admin' %}
+            <!-- LOGIN -->
 
-            <li>
-                <a
-                    class="dropdown-item"
-                    href="{% url 'all' %}"
-                >
-                    All
-                </a>
-            </li>
+            <a
+                href="{% url 'login' %}"
+                class="btn btn-primary btn-sm"
+            >
 
-            {% endif %}
+                Login
 
-        </ul>
+            </a>
+
+
+        {% endif %}
 
     </div>
 
 </div>
 
+</nav>
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+{% if user.is_authenticated %}
+
+<div
+    id="sidebar"
+    class="sidebar"
+>
+
+<!-- SIDEBAR HEADER -->
+
+<div class="sidebar-header">
+
+    <span>
+        Dashboards
+    </span>
+
+
+    <button
+        class="close-btn"
+        onclick="toggleSidebar()"
+        aria-label="Close menu"
+    >
+
+        ×
+
+    </button>
+
+</div>
+
+
+<!-- SIDEBAR MENU -->
+
+<div class="sidebar-menu">
+
+
+    <!-- ASSET -->
+
+    {% if role == 'admin' or role == 'asset' %}
+
+    <a
+        href="{% url 'asset' %}"
+        class="sidebar-item"
+    >
+
+        Asset Data
+
+    </a>
+
+    {% endif %}
+
+
+    <!-- RACK -->
+
+    {% if role == 'admin' or role == 'rack' %}
+
+    <a
+        href="{% url 'rack' %}"
+        class="sidebar-item"
+    >
+
+        Rack Data
+
+    </a>
+
+    {% endif %}
+
+
+    <!-- ALL
+
+    {% if role == 'admin' %}
+
+    <a
+        href="{% url 'all' %}"
+        class="sidebar-item"
+    >
+
+        All Data
+
+    </a>
+
+    {% endif %} -->
+
+
+</div>
+
+</div>
+
+<!-- =========================
+     SIDEBAR OVERLAY
+========================= -->
+
+<div
+    id="sidebarOverlay"
+    class="sidebar-overlay"
+    onclick="toggleSidebar()"
+></div>
+
 {% endif %}
 
-
-
-<!-- MESSAGES -->
+<!-- =========================
+     MESSAGES
+========================= -->
 
 {% if messages %}
 
 <div class="container-fluid px-4 mt-3">
 
-    {% for message in messages %}
+{% for message in messages %}
 
-        <div class="alert alert-info">
+    <div class="alert alert-info">
 
-            {{ message }}
+        {{ message }}
 
-        </div>
+    </div>
 
-    {% endfor %}
+{% endfor %}
 
 </div>
 
 {% endif %}
 
-
-
-<!-- PAGE CONTENT -->
+<!-- =========================
+     PAGE CONTENT
+========================= -->
 
 <div class="dashboard-container">
 
-    {% block content %}
+{% block content %}
 
-    {% endblock %}
+{% endblock %}
 
 </div>
 
-
-
-<!-- Bootstrap JS -->
+<!-- =========================
+     BOOTSTRAP JS
+========================= -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
 </script>
 
-
+<!-- =========================
+     JAVASCRIPT
+========================= -->
 
 <script>
 
+
+/* =========================
+   SIDEBAR
+========================= */
+
+function toggleSidebar() {
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const overlay =
+        document.getElementById("sidebarOverlay");
+
+
+    if (!sidebar || !overlay) {
+        return;
+    }
+
+
+    sidebar.classList.toggle("open");
+
+    overlay.classList.toggle("show");
+
+}
+
+
+
+/* =========================
+   FULLSCREEN
+========================= */
+
 function toggleFullscreen() {
 
-    const iframe = document.querySelector(
-        ".kibana-frame"
-    );
+    const iframe =
+        document.querySelector(".kibana-frame");
+
 
     if (!iframe) {
         return;
@@ -238,7 +530,9 @@ function toggleFullscreen() {
 
         iframe.requestFullscreen();
 
-    } else {
+    }
+
+    else {
 
         document.exitFullscreen();
 
@@ -247,7 +541,6 @@ function toggleFullscreen() {
 }
 
 </script>
-
 
 </body>
 
