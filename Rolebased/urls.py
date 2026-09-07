@@ -66,5 +66,5 @@ urlpatterns = [
         'download_csv/',
          views.download_csv,
          name='download_csv'
-         )
+         ),
 ]

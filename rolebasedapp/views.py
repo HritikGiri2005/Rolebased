@@ -7,7 +7,8 @@ from .models import UserProfile
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
-import csv
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 from django.http import HttpResponse
 
 es = Elasticsearch(
@@ -238,9 +239,10 @@ def all_dashboard(request):
 # -----------------------------
 
 @login_required(login_url='login')
-def download_csv(request):
+@login_required(login_url='login')
+def download_excel(request):
 
-    # Check Elasticsearch connection
+    # Check Elasticsearch
     if not es.ping():
 
         return HttpResponse(
@@ -250,35 +252,32 @@ def download_csv(request):
 
     try:
 
+        # Create Excel workbook
+        workbook = Workbook()
+
+        # Remove default sheet
+        default_sheet = workbook.active
+        workbook.remove(default_sheet)
+
         # Elasticsearch indices
-        indices = [
-            "ea_assets",
-            "ea-racks"
-        ]
+        indices = {
+            "ea_assets": "Assets",
+            "ea-racks": "Racks"
+        }
 
-        # Create CSV response
-        response = HttpResponse(
-            content_type="text/csv"
-        )
+        # Process each index
+        for index_name, sheet_name in indices.items():
 
-        # Download filename
-        response["Content-Disposition"] = (
-            'attachment; filename="DataCenter_Data.csv"'
-        )
-
-        writer = csv.writer(response)
-
-        # Get all documents
-        all_data = []
-
-        for index_name in indices:
-
-            # Check index exists
-            if not es.indices.exists(
-                index=index_name
-            ):
+            # Check if index exists
+            if not es.indices.exists(index=index_name):
                 continue
 
+            # Create worksheet
+            worksheet = workbook.create_sheet(
+                title=sheet_name
+            )
+
+            # Get all Elasticsearch documents
             documents = scan(
                 es,
                 index=index_name,
@@ -289,6 +288,8 @@ def download_csv(request):
                 }
             )
 
+            all_data = []
+
             for document in documents:
 
                 source = document.get(
@@ -296,52 +297,111 @@ def download_csv(request):
                     {}
                 )
 
-                # Add index name
-                source["Elasticsearch Index"] = index_name
-
                 all_data.append(source)
 
-        # No data found
-        if not all_data:
+            # No data
+            if not all_data:
 
-            writer.writerow([
-                "No data found"
-            ])
+                worksheet.append([
+                    "No data found"
+                ])
 
-            return response
+                continue
 
-        # Get all column names
-        columns = set()
+            # Get all unique columns
+            columns = []
 
-        for data in all_data:
-            columns.update(data.keys())
+            for data in all_data:
 
-        columns = list(columns)
+                for key in data.keys():
 
-        # CSV header
-        writer.writerow(columns)
+                    if key not in columns:
+                        columns.append(key)
 
-        # CSV rows
-        for data in all_data:
+            # Add headers
+            worksheet.append(columns)
 
-            row = []
+            # Add data
+            for data in all_data:
 
-            for column in columns:
+                row = []
 
-                value = data.get(
-                    column,
-                    ""
+                for column in columns:
+
+                    value = data.get(
+                        column,
+                        ""
+                    )
+
+                    # Handle None
+                    if value is None:
+                        value = ""
+
+                    # Handle lists/dictionaries
+                    if isinstance(value, (list, dict)):
+                        value = str(value)
+
+                    row.append(value)
+
+                worksheet.append(row)
+
+            # Freeze header row
+            worksheet.freeze_panes = "A2"
+
+            # Auto-adjust column width
+            for column_number in range(
+                1,
+                worksheet.max_column + 1
+            ):
+
+                max_length = 0
+
+                column_letter = get_column_letter(
+                    column_number
                 )
 
-                row.append(value)
+                for cell in worksheet[column_letter]:
 
-            writer.writerow(row)
+                    if cell.value is not None:
+
+                        length = len(
+                            str(cell.value)
+                        )
+
+                        if length > max_length:
+                            max_length = length
+
+                # Limit very large columns
+                max_length = min(
+                    max_length + 2,
+                    50
+                )
+
+                worksheet.column_dimensions[
+                    column_letter
+                ].width = max_length
+
+        # Create response
+        response = HttpResponse(
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            )
+        )
+
+        # Excel filename
+        response["Content-Disposition"] = (
+            'attachment; filename="DataCenter_Data.xlsx"'
+        )
+
+        # Save workbook into response
+        workbook.save(response)
 
         return response
 
     except Exception as e:
 
         return HttpResponse(
-            f"Error creating CSV file: {str(e)}",
+            f"Error creating Excel file: {str(e)}",
             status=500
         )
