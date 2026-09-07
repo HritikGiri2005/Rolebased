@@ -286,6 +286,14 @@
 
         {% if user.is_authenticated %}
 
+            <!-- Download CSV -->
+
+            <button 
+            href="{% url 'download_csv' %}"
+            class="btn btn-success btn-sm">
+                Download Excel
+            </button>
+
 
             <!-- FULLSCREEN -->
 
