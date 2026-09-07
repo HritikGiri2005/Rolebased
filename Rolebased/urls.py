@@ -1,70 +1,28 @@
-"""
-URL configuration for Rolebased project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
 from django.urls import path
 from rolebasedapp import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path(
-        '',
-        views.dashboard_view,
-        name='dashboard'
-    ),
 
-    path(
-        'login/',
-        views.login_view,
-        name='login'
-    ),
+    # -----------------------------
+    # AUTH
+    # -----------------------------
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('register/', views.register_view, name='register'),
 
-    path(
-        'logout/',
-        views.logout_view,
-        name='logout'
-    ),
+    # -----------------------------
+    # DASHBOARDS
+    # -----------------------------
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('dashboard/asset/', views.asset_dashboard, name='asset'),
+    path('dashboard/rack/', views.rack_dashboard, name='rack'),
+    path('dashboard/all/', views.all_dashboard, name='all'),
 
-    path(
-        'register/',
-        views.register_view,
-        name='register'
-    ),
+    # -----------------------------
+    # EXCEL DOWNLOADS
+    # -----------------------------
+    # path('download/asset/', views.download_asset_excel, name='download_asset_excel'),
+    path('export-racks/', views.export_racks_excel, name='export-racks'),
+    # path('download/all/', views.download_all_excel, name='download_all_excel'),
 
-    path(
-        'asset/',
-        views.asset_dashboard,
-        name='asset'
-    ),
-
-    path(
-        'rack/',
-        views.rack_dashboard,
-        name='rack'
-    ),
-
-    path(
-        'all/',
-        views.all_dashboard,
-        name='all'
-    ),
-
-    path(
-        'download_csv/',
-         views.download_csv,
-         name='download_csv'
-         ),
 ]

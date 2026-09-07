@@ -13,7 +13,7 @@
 
 <title>
     {% block title %}
-    Dashboard
+    Data Center Dashboard
     {% endblock %}
 </title>
 
@@ -94,9 +94,6 @@
         box-shadow: 3px 0 10px rgba(0, 0, 0, 0.3);
     }
 
-
-    /* Sidebar open */
-
     .sidebar.open {
         left: 0;
     }
@@ -124,7 +121,9 @@
     }
 
 
-    /* Close button */
+    /* =========================
+       CLOSE BUTTON
+    ========================= */
 
     .close-btn {
         border: none;
@@ -147,7 +146,6 @@
         padding-top: 10px;
     }
 
-
     .sidebar-item {
         display: block;
 
@@ -161,7 +159,6 @@
 
         transition: background-color 0.2s;
     }
-
 
     .sidebar-item:hover {
         background-color: #343a40;
@@ -190,7 +187,6 @@
         z-index: 1040;
     }
 
-
     .sidebar-overlay.show {
         display: block;
     }
@@ -204,7 +200,6 @@
         padding: 20px;
     }
 
-
     .kibana-container {
         width: 100%;
 
@@ -212,7 +207,6 @@
 
         position: relative;
     }
-
 
     .kibana-frame {
         width: 100%;
@@ -236,110 +230,138 @@
 
 <body>
 
+
 <!-- =========================
      NAVBAR
 ========================= -->
 
 <nav class="navbar navbar-dark bg-dark px-3">
 
-<div class="container-fluid">
+    <div class="container-fluid">
 
 
-    <!-- LEFT SIDE -->
+        <!-- LEFT SIDE -->
 
-    <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center">
 
-        {% if user.is_authenticated %}
+            {% if user.is_authenticated %}
 
-        <!-- HAMBURGER BUTTON -->
-
-        <button
-            class="hamburger-btn me-2"
-            type="button"
-            onclick="toggleSidebar()"
-            aria-label="Open dashboard menu"
-        >
-
-            <span></span>
-            <span></span>
-            <span></span>
-
-        </button>
-
-        {% endif %}
-
-
-        <!-- TITLE -->
-
-        <span class="navbar-brand mb-0">
-
-            Data Center Dashboard
-
-        </span>
-
-    </div>
-
-
-    <!-- RIGHT SIDE -->
-
-    <div class="d-flex align-items-center gap-2">
-
-        {% if user.is_authenticated %}
-
-            <!-- Download CSV -->
-
-            <a href="{% url 'download_csv' %}" class="btn btn-success btn-sm">
-                Download CSV
-                
-            </a>
-
-
-            <!-- FULLSCREEN -->
+            <!-- HAMBURGER BUTTON -->
 
             <button
-                class="btn btn-outline-light btn-sm"
-                onclick="toggleFullscreen()"
+                class="hamburger-btn me-2"
+                type="button"
+                onclick="toggleSidebar()"
+                aria-label="Open dashboard menu"
             >
 
-                ⛶ Fullscreen
+                <span></span>
+                <span></span>
+                <span></span>
 
             </button>
 
-
-            <!-- LOGOUT -->
-
-            <a
-                href="{% url 'logout' %}"
-                class="btn btn-danger btn-sm"
-            >
-
-                Logout
-
-            </a>
+            {% endif %}
 
 
-        {% else %}
+            <!-- TITLE -->
+
+            <span class="navbar-brand mb-0">
+
+                Data Center Dashboard
+
+            </span>
+
+        </div>
 
 
-            <!-- LOGIN -->
+        <!-- RIGHT SIDE -->
 
-            <a
-                href="{% url 'login' %}"
-                class="btn btn-primary btn-sm"
-            >
+        <div class="d-flex align-items-center gap-2">
 
-                Login
-
-            </a>
+            {% if user.is_authenticated %}
 
 
-        {% endif %}
+                <!-- =========================
+                     EXCEL DOWNLOAD
+                ========================= -->
+
+                <!--
+                    Asset Dashboard
+                    Shows Asset Excel button
+                    for both asset user and admin
+                -->
+
+                {% if request.resolver_match.url_name == 'rack' %}
+
+                <a
+                    href="{% url 'export-racks' %}"
+                    class="btn btn-success btn-sm"
+                >
+
+                    Download Rack Report
+
+                </a>
+
+                {% endif %}
+
+
+                
+
+
+                <!-- =========================
+                     FULLSCREEN
+                ========================= -->
+
+                <button
+                    class="btn btn-outline-light btn-sm"
+                    onclick="toggleFullscreen()"
+                >
+
+                    ⛶ Fullscreen
+
+                </button>
+
+
+                <!-- =========================
+                     LOGOUT
+                ========================= -->
+
+                <a
+                    href="{% url 'logout' %}"
+                    class="btn btn-danger btn-sm"
+                >
+
+                    Logout
+
+                </a>
+
+
+            {% else %}
+
+
+                <!-- =========================
+                     LOGIN
+                ========================= -->
+
+                <a
+                    href="{% url 'login' %}"
+                    class="btn btn-primary btn-sm"
+                >
+
+                    Login
+
+                </a>
+
+
+            {% endif %}
+
+        </div>
 
     </div>
 
-</div>
-
 </nav>
+
 
 <!-- =========================
      SIDEBAR
@@ -352,84 +374,92 @@
     class="sidebar"
 >
 
-<!-- SIDEBAR HEADER -->
 
-<div class="sidebar-header">
+    <!-- SIDEBAR HEADER -->
 
-    <span>
-        Dashboards
-    </span>
+    <div class="sidebar-header">
+
+        <span>
+            Dashboards
+        </span>
 
 
-    <button
-        class="close-btn"
-        onclick="toggleSidebar()"
-        aria-label="Close menu"
-    >
+        <button
+            class="close-btn"
+            onclick="toggleSidebar()"
+            aria-label="Close menu"
+        >
 
-        ×
+            ×
 
-    </button>
+        </button>
+
+    </div>
+
+
+    <!-- SIDEBAR MENU -->
+
+    <div class="sidebar-menu">
+
+
+        <!-- =========================
+             ASSET DATA
+        ========================= -->
+
+        {% if role == 'asset' or role == 'all' %}
+
+        <a
+            href="{% url 'asset' %}"
+            class="sidebar-item"
+        >
+
+            Asset Data
+
+        </a>
+
+        {% endif %}
+
+
+        <!-- =========================
+             RACK DATA
+        ========================= -->
+
+        {% if role == 'rack' or role == 'all' %}
+
+        <a
+            href="{% url 'rack' %}"
+            class="sidebar-item"
+        >
+
+            Rack Data
+
+        </a>
+
+        {% endif %}
+
+
+        <!-- =========================
+             ALL DATA
+        ========================= -->
+
+        {% if role == 'all' %}
+
+        <a
+            href="{% url 'all' %}"
+            class="sidebar-item"
+        >
+
+            All Data
+
+        </a>
+
+        {% endif %}
+
+
+    </div>
 
 </div>
 
-
-<!-- SIDEBAR MENU -->
-
-<div class="sidebar-menu">
-
-
-    <!-- ASSET -->
-
-    {% if role == 'admin' or role == 'asset' %}
-
-    <a
-        href="{% url 'asset' %}"
-        class="sidebar-item"
-    >
-
-        Asset Data
-
-    </a>
-
-    {% endif %}
-
-
-    <!-- RACK -->
-
-    {% if role == 'admin' or role == 'rack' %}
-
-    <a
-        href="{% url 'rack' %}"
-        class="sidebar-item"
-    >
-
-        Rack Data
-
-    </a>
-
-    {% endif %}
-
-
-    <!-- ALL
-
-    {% if role == 'admin' %}
-
-    <a
-        href="{% url 'all' %}"
-        class="sidebar-item"
-    >
-
-        All Data
-
-    </a>
-
-    {% endif %} -->
-
-
-</div>
-
-</div>
 
 <!-- =========================
      SIDEBAR OVERLAY
@@ -443,6 +473,7 @@
 
 {% endif %}
 
+
 <!-- =========================
      MESSAGES
 ========================= -->
@@ -451,7 +482,7 @@
 
 <div class="container-fluid px-4 mt-3">
 
-{% for message in messages %}
+    {% for message in messages %}
 
     <div class="alert alert-info">
 
@@ -459,11 +490,12 @@
 
     </div>
 
-{% endfor %}
+    {% endfor %}
 
 </div>
 
 {% endif %}
+
 
 <!-- =========================
      PAGE CONTENT
@@ -471,11 +503,12 @@
 
 <div class="dashboard-container">
 
-{% block content %}
+    {% block content %}
 
-{% endblock %}
+    {% endblock %}
 
 </div>
+
 
 <!-- =========================
      BOOTSTRAP JS
@@ -484,6 +517,7 @@
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
 </script>
+
 
 <!-- =========================
      JAVASCRIPT
@@ -517,7 +551,6 @@ function toggleSidebar() {
 }
 
 
-
 /* =========================
    FULLSCREEN
 ========================= */
@@ -548,6 +581,7 @@ function toggleFullscreen() {
 }
 
 </script>
+
 
 </body>
 
