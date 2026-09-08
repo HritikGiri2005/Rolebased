@@ -6,6 +6,7 @@ urlpatterns = [
     # -----------------------------
     # AUTH
     # -----------------------------
+    path("", views.login_view, name="home"),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
@@ -21,8 +22,6 @@ urlpatterns = [
     # -----------------------------
     # EXCEL DOWNLOADS
     # -----------------------------
-    # path('download/asset/', views.download_asset_excel, name='download_asset_excel'),
     path('export-racks/', views.export_racks_excel, name='export-racks'),
-    # path('download/all/', views.download_all_excel, name='download_all_excel'),
-
+    path("export-assets/",views.export_assets_excel,name="export-assets"),
 ]

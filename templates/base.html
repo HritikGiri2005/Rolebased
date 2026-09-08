@@ -281,17 +281,6 @@
 
             {% if user.is_authenticated %}
 
-
-                <!-- =========================
-                     EXCEL DOWNLOAD
-                ========================= -->
-
-                <!--
-                    Asset Dashboard
-                    Shows Asset Excel button
-                    for both asset user and admin
-                -->
-
                 {% if request.resolver_match.url_name == 'rack' %}
 
                 <a
@@ -305,9 +294,18 @@
 
                 {% endif %}
 
+                {% if request.resolver_match.url_name == 'asset' %}
 
-                
+                <a
+                    href="{% url 'export-assets' %}"
+                    class="btn btn-success btn-sm"
+                >
 
+                    Download Asset Report
+
+                </a>
+
+                {% endif %}
 
                 <!-- =========================
                      FULLSCREEN
@@ -406,7 +404,7 @@
              ASSET DATA
         ========================= -->
 
-        {% if role == 'asset' or role == 'all' %}
+        {% if role == 'asset' or role == 'admin' %}
 
         <a
             href="{% url 'asset' %}"
@@ -424,7 +422,7 @@
              RACK DATA
         ========================= -->
 
-        {% if role == 'rack' or role == 'all' %}
+        {% if role == 'rack' or role == 'admin' %}
 
         <a
             href="{% url 'rack' %}"
@@ -445,7 +443,7 @@
         {% if role == 'all' %}
 
         <a
-            href="{% url 'all' %}"
+            href="{% url 'admin' %}"
             class="sidebar-item"
         >
 

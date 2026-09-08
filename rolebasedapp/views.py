@@ -261,6 +261,35 @@ def export_racks_excel(request):
     # Convert to DataFrame
     df = pd.DataFrame(records)
 
+    # Arrange columns in required order
+    df = df[
+        [
+            "Rack Name",
+            "Location",
+            "Row",
+            "Rack U Size",
+            "Consumed U",
+            "Free U",
+            "Rack Make",
+            "Rack Type",
+            "IP Address",
+            "Gateway ID",
+            "Module ID",
+            "Address ID",
+            "Created By",
+            "timestamp"
+        ]
+    ]
+
+    #  # Drop unwanted columns
+    # columns_to_drop = [
+    #     "SR No.",
+    #     "Asset Mount",
+    #     "Application Name"
+    # ]
+    
+    # df = df.drop(columns=columns_to_drop, errors="ignore")
+
     # Create Excel response
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -268,6 +297,74 @@ def export_racks_excel(request):
 
     response["Content-Disposition"] = (
         'attachment; filename="ea_racks.xlsx"'
+    )
+
+    # Write DataFrame to Excel
+    df.to_excel(
+        response,
+        index=False,
+        engine="openpyxl"
+    )
+
+    return response
+
+
+def export_assets_excel(request):
+
+    # Fetch data from ea-racks
+    response = es.search(
+        index="ea_assets",
+        query={
+            "match_all": {}
+        },
+        size=10000
+    )
+
+    # Extract _source from every document
+    records = [
+        hit["_source"]
+        for hit in response["hits"]["hits"]
+    ]
+
+    # Convert to DataFrame
+    df = pd.DataFrame(records)
+
+    # Arrange columns in required order
+    df = df[
+            [
+                "Rack Name",
+                "Location",
+                "Row",
+                "Rack U Size",
+                "Consumed U",
+                "Free U",
+                "Rack Make",
+                "Rack Type",
+                "IP Address",
+                "Gateway ID",
+                "Module ID",
+                "Address ID",
+                "Created By",
+                "timestamp"
+        ]
+    ]
+
+    #  # Drop unwanted columns
+    columns_to_drop = [
+        "SR No.",
+        "asset_id",
+        "timestamp"
+    ]
+
+    df = df.drop(columns=columns_to_drop, errors="ignore")
+
+    # Create Excel response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    response["Content-Disposition"] = (
+        'attachment; filename="ea_assets.xlsx"'
     )
 
     # Write DataFrame to Excel
