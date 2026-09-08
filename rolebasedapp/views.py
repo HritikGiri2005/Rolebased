@@ -299,12 +299,34 @@ def export_racks_excel(request):
         'attachment; filename="ea_racks.xlsx"'
     )
 
-    # Write DataFrame to Excel
-    df.to_excel(
-        response,
-        index=False,
-        engine="openpyxl"
-    )
+# Create multiple sheets
+    with pd.ExcelWriter(response, engine="openpyxl") as writer:
+
+        # All assets sheet
+        df.to_excel(
+            writer,
+            sheet_name="All Racks   ",
+            index=False
+        )
+
+        # Floor-wise sheets
+        for floor in range(1, 10):
+
+            floor_df = df[
+                df["Rack Name"].str.contains(
+                    f"{floor}F",
+                    na=False
+                )
+            ]
+
+            # Create sheet only if records exist
+            if not floor_df.empty:
+
+                floor_df.to_excel(
+                    writer,
+                    sheet_name=f"Floor {floor} Racks",
+                    index=False
+                )
 
     return response
 
@@ -329,35 +351,18 @@ def export_assets_excel(request):
     # Convert to DataFrame
     df = pd.DataFrame(records)
 
-    # Arrange columns in required order
-    df = df[
-            [
-                "Rack Name",
-                "Location",
-                "Row",
-                "Rack U Size",
-                "Consumed U",
-                "Free U",
-                "Rack Make",
-                "Rack Type",
-                "IP Address",
-                "Gateway ID",
-                "Module ID",
-                "Address ID",
-                "Created By",
-                "timestamp"
-        ]
-    ]
-
     #  # Drop unwanted columns
-    columns_to_drop = [
+    df = df.drop( 
+        columns=[
         "SR No.",
         "asset_id",
         "timestamp"
-    ]
+    ],
+    errors="ignore")
 
-    df = df.drop(columns=columns_to_drop, errors="ignore")
+    #Filter Rack Names floorwise
 
+    
     # Create Excel response
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -367,11 +372,33 @@ def export_assets_excel(request):
         'attachment; filename="ea_assets.xlsx"'
     )
 
-    # Write DataFrame to Excel
-    df.to_excel(
-        response,
-        index=False,
-        engine="openpyxl"
-    )
+    # Create multiple sheets
+    with pd.ExcelWriter(response, engine="openpyxl") as writer:
+
+        # All assets sheet
+        df.to_excel(
+            writer,
+            sheet_name="All Assets",
+            index=False
+        )
+
+        # Floor-wise sheets
+        for floor in range(1, 10):
+
+            floor_df = df[
+                df["Rack"].str.contains(
+                    f"{floor}F",
+                    na=False
+                )
+            ]
+
+            # Create sheet only if records exist
+            if not floor_df.empty:
+
+                floor_df.to_excel(
+                    writer,
+                    sheet_name=f"{floor}th Floor Racks",
+                    index=False
+                )
 
     return response
