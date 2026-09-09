@@ -370,18 +370,6 @@ def export_racks_excel(request):
                 df["Consumed U"] = pd.to_numeric(df["Consumed U"],errors="coerce").fillna(0)
                 df["Free U"] = pd.to_numeric(df["Free U"],errors="coerce").fillna(0)
 
-                # --------------------------------
-                # LOCATION-WISE SUMMARY
-                # --------------------------------
-
-                location_summary = (
-                    floor_df
-                    .groupby("Location")[
-                        ["Consumed U", "Free U"]
-                    ]
-                    .sum()
-                )
-
          # ==================================
         # 4. OVERALL LOCATION-WISE SUMMARY
         # ==================================
@@ -543,8 +531,10 @@ def export_assets_excel(request):
 
 def export_metrics_excel(request):
 
-    # Fetch data from ea-racks
-    response = es.search(
+    # -----------------------------------------
+    # Fetch data from Elasticsearch
+    # -----------------------------------------
+    es_response = es.search(
         index="ea-metrics",
         query={
             "match_all": {}
@@ -552,64 +542,198 @@ def export_metrics_excel(request):
         size=10000
     )
 
+    # -----------------------------------------
     # Extract _source from every document
+    # -----------------------------------------
     records = [
         hit["_source"]
-        for hit in response["hits"]["hits"]
+        for hit in es_response["hits"]["hits"]
     ]
 
+    # -----------------------------------------
     # Convert to DataFrame
+    # -----------------------------------------
     df = pd.DataFrame(records)
 
-    # #  # Drop unwanted columns
-    # df = df.drop( 
-    #     columns=[
-    #     "SR No.",
-    #     "asset_id",
-    #     "timestamp"
-    # ],
-    # errors="ignore")
+    # -----------------------------------------
+    # Check if data exists
+    # -----------------------------------------
+    if df.empty:
+        return HttpResponse(
+            "No data found",
+            status=404
+        )
 
-    #Filter Rack Names floorwise
+    # -----------------------------------------
+    # Check current_timestamp exists
+    # -----------------------------------------
+    if "current_timestamp" not in df.columns:
+        return HttpResponse(
+            "current_timestamp field not found",
+            status=400
+        )
 
-    
+    # -----------------------------------------
+    # Convert epoch milliseconds
+    # to India datetime
+    # -----------------------------------------
+    df["current_timestamp"] = pd.to_datetime(
+        df["current_timestamp"],
+        unit="ms",
+        utc=True,
+        errors="coerce"
+    ).dt.tz_convert("Asia/Kolkata")
+
+    # -----------------------------------------
+    # Remove records with invalid timestamp
+    # -----------------------------------------
+    df = df.dropna(
+        subset=["current_timestamp"]
+    )
+
+    # -----------------------------------------
+    # Sort all data by timestamp
+    # -----------------------------------------
+    df = df.sort_values(
+        by="current_timestamp"
+    )
+
+    # -----------------------------------------
+    # Create separate DataFrame for filtering
+    # -----------------------------------------
+    filter_df = df.copy()
+
+    # -----------------------------------------
+    # Create 5-minute time bucket
+    # -----------------------------------------
+    filter_df["time_bucket"] = (
+        filter_df["current_timestamp"]
+        .dt.floor("5min")
+    )
+
+    # -----------------------------------------
     # Create Excel response
+    # -----------------------------------------
     response = HttpResponse(
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
     )
 
     response["Content-Disposition"] = (
         'attachment; filename="ea-metrics.xlsx"'
     )
 
-    # Create multiple sheets
-    with pd.ExcelWriter(response, engine="openpyxl") as writer:
+    # -----------------------------------------
+    # Create Excel workbook
+    # -----------------------------------------
+    with pd.ExcelWriter(
+        response,
+        engine="openpyxl"
+    ) as writer:
 
-        # All assets sheet
-        df.to_excel(
+        # =========================================
+        # ALL METRICS
+        # =========================================
+        # Everything is displayed here.
+        # No filtering.
+        # No column removal.
+        # =========================================
+
+        all_df = df.copy()
+
+        # Excel does not support timezone-aware datetime
+        all_df["current_timestamp"] = (
+            all_df["current_timestamp"]
+            .dt.tz_localize(None)
+        )
+
+        all_df.to_excel(
             writer,
-            sheet_name="All Assets",
+            sheet_name="All Metrics",
             index=False
         )
 
-        # # Floor-wise sheets
-        # floors = df["Rack"].dropna().str.extract(r"(\d+)F")[0].dropna().unique()
-        # for floor in sorted(floors, key=int):
+        # Set column width for All Metrics
+        worksheet = writer.sheets["All Metrics"]
 
-        #     floor_df = df[
-        #         df["Rack"].str.contains(
-        #             f"{floor}F",
-        #             na=False
-        #         )
-        #     ]
+        worksheet.column_dimensions["A"].width = 22
 
-        #     # Create sheet only if records exist
-        #     if not floor_df.empty:
+        # =========================================
+        # 5-MINUTE TIME-WISE SHEETS
+        # =========================================
 
-        #         floor_df.to_excel(
-        #             writer,
-        #             sheet_name=f"Floor {floor} Racks",
-        #             index=False
-        #         )
+        for time_bucket, time_df in filter_df.groupby(
+            "time_bucket"
+        ):
 
+            # -------------------------------------
+            # Start time
+            # -------------------------------------
+            start_time = time_bucket.strftime(
+                "%H-%M"
+            )
+
+            # -------------------------------------
+            # End time
+            # -------------------------------------
+            end_time = (
+                time_bucket +
+                pd.Timedelta(minutes=5)
+            ).strftime("%H-%M")
+
+            # -------------------------------------
+            # Sheet name
+            # Example:
+            # 18-50_to_18-55
+            # -------------------------------------
+            sheet_name = (
+                f"{start_time}_to_{end_time}"
+            )
+
+            # Excel sheet name maximum = 31
+            sheet_name = sheet_name[:31]
+
+            # =====================================
+            # ONLY THESE 3 COLUMNS
+            # =====================================
+
+            time_df = time_df[
+                [
+                    "current_timestamp",
+                    "humidity",
+                    "location"
+                ]
+            ].copy()
+
+            # -------------------------------------
+            # Remove timezone information
+            # -------------------------------------
+            time_df["current_timestamp"] = (
+                time_df["current_timestamp"]
+                .dt.tz_localize(None)
+            )
+
+            # -------------------------------------
+            # Write time-wise sheet
+            # -------------------------------------
+            time_df.to_excel(
+                writer,
+                sheet_name=sheet_name,
+                index=False
+            )
+
+            # -------------------------------------
+            # Set column widths
+            # -------------------------------------
+            worksheet = writer.sheets[sheet_name]
+
+            worksheet.column_dimensions["A"].width = 22
+            worksheet.column_dimensions["B"].width = 12
+            worksheet.column_dimensions["C"].width = 30
+
+    # -----------------------------------------
+    # Return Excel file
+    # -----------------------------------------
     return response
