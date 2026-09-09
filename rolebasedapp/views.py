@@ -2,11 +2,14 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
+import os
+import tempfile
 from .forms import LoginForm, RegisterForm
 from .models import UserProfile
 import pandas as pd
 from elasticsearch import Elasticsearch
+import matplotlib.pyplot as plt
+from openpyxl.drawing.image import Image
 
 es = Elasticsearch([{'host': 'localhost', 'port':9200, 'scheme':'http'}]) #update host and port as needed
 
@@ -232,9 +235,35 @@ def all_dashboard(request):
     )
 
 
+@login_required(login_url='login')
+def metrics_dashboard(request):
+
+    role = request.user.profile.role
+
+    # Admin and Rack users can access
+    if role not in ['admin', 'rack', 'asset']:
+
+        messages.error(
+            request,
+            'You do not have permission to access metrics Data.'
+        )
+
+        return redirect('dashboard')
+
+    return render(
+        request,
+        'metrics.html',
+        {
+            'role': role
+        }
+    )
+
+
+
 from django.http import HttpResponse
 from elasticsearch import Elasticsearch
 import pandas as pd
+from io import BytesIO
 
 
 # Elasticsearch connection
@@ -302,15 +331,24 @@ def export_racks_excel(request):
 # Create multiple sheets
     with pd.ExcelWriter(response, engine="openpyxl") as writer:
 
-        # All assets sheet
+        # All racks sheet
         df.to_excel(
             writer,
-            sheet_name="All Racks   ",
+            sheet_name="All Racks",
             index=False
         )
 
-        # Floor-wise sheets
-        for floor in range(1, 10):
+        # Get floor numbers from Rack Name column
+        floors = (
+            df["Rack Name"]
+            .dropna()
+            .str.extract(r"(\d+)F")[0]
+            .dropna()
+            .unique()
+        )
+
+        # Floor-wise sheets in numerical order
+        for floor in sorted(floors, key=int):
 
             floor_df = df[
                 df["Rack Name"].str.contains(
@@ -319,7 +357,7 @@ def export_racks_excel(request):
                 )
             ]
 
-            # Create sheet only if records exist
+        # Create sheet only if records exist
             if not floor_df.empty:
 
                 floor_df.to_excel(
@@ -328,8 +366,106 @@ def export_racks_excel(request):
                     index=False
                 )
 
-    return response
 
+                df["Consumed U"] = pd.to_numeric(df["Consumed U"],errors="coerce").fillna(0)
+                df["Free U"] = pd.to_numeric(df["Free U"],errors="coerce").fillna(0)
+
+                # --------------------------------
+                # LOCATION-WISE SUMMARY
+                # --------------------------------
+
+                location_summary = (
+                    floor_df
+                    .groupby("Location")[
+                        ["Consumed U", "Free U"]
+                    ]
+                    .sum()
+                )
+
+         # ==================================
+        # 4. OVERALL LOCATION-WISE SUMMARY
+        # ==================================
+        #
+        # IMPORTANT:
+        # Use df here, NOT floor_df
+        #
+
+        location_summary = (
+            df.groupby("Location")[
+                ["Consumed U", "Free U"]
+            ]
+            .sum()
+        )
+
+        # ==================================
+        # 5. CREATE OVERALL STACKED BAR CHART
+        # ==================================
+
+        fig, ax = plt.subplots(
+            figsize=(8, 5)
+        )
+
+        location_summary.plot(
+            kind="bar",
+            stacked=True,
+            ax=ax
+        )
+
+        ax.set_title(
+            "Overall - Consumed U vs Free U"
+        )
+
+        ax.set_xlabel("Location")
+        ax.set_ylabel("U")
+
+        ax.legend(
+            ["Consumed U", "Free U"]
+        )
+
+        plt.xticks(
+            rotation=30,
+            ha="right",
+            fontsize = 8
+        )
+
+        plt.tight_layout()
+
+        # ==================================
+        # 6. SAVE MATPLOTLIB GRAPH IN MEMORY
+        # ==================================
+
+        image_data = BytesIO()
+
+        fig.savefig(
+            image_data,
+            format="png",
+            dpi=150,
+            bbox_inches="tight"
+        )
+
+        plt.close(fig)
+
+        # Move pointer to beginning
+        image_data.seek(0)
+
+        # ==================================
+        # 7. INSERT GRAPH INTO ALL RACKS
+        # ==================================
+
+        worksheet = writer.book["All Racks"]
+
+        img = Image(image_data)
+
+        worksheet.add_image(
+            img,
+            "P2"
+        )
+
+    # ==================================
+    # 8. RETURN EXCEL FILE
+    # ==================================
+
+    return response
 
 def export_assets_excel(request):
 
@@ -383,7 +519,8 @@ def export_assets_excel(request):
         )
 
         # Floor-wise sheets
-        for floor in range(1, 10):
+        floors = df["Rack"].dropna().str.extract(r"(\d+)F")[0].dropna().unique()
+        for floor in sorted(floors, key=int):
 
             floor_df = df[
                 df["Rack"].str.contains(
@@ -397,7 +534,7 @@ def export_assets_excel(request):
 
                 floor_df.to_excel(
                     writer,
-                    sheet_name=f"{floor}th Floor Racks",
+                    sheet_name=f"Floor {floor} Racks",
                     index=False
                 )
 

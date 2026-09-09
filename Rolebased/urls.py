@@ -18,6 +18,7 @@ urlpatterns = [
     path('dashboard/asset/', views.asset_dashboard, name='asset'),
     path('dashboard/rack/', views.rack_dashboard, name='rack'),
     path('dashboard/all/', views.all_dashboard, name='all'),
+    path('dashboard/metrics/', views.metrics_dashboard, name="metrics"),
 
     # -----------------------------
     # EXCEL DOWNLOADS
