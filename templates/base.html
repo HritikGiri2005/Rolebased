@@ -307,10 +307,10 @@
 
                 {% endif %}
 
-                <!-- {% if request.resolver_match.url_name == 'metrics' %}
+                {% if request.resolver_match.url_name == 'metrics' %}
 
                 <a
-                    href="{% url 'export-assets' %}"
+                    href="{% url 'export-metrics' %}"
                     class="btn btn-success btn-sm"
                 >
 
@@ -318,7 +318,7 @@
 
                 </a>
 
-                {% endif %} -->
+                {% endif %}
 
                 <!-- =========================
                      FULLSCREEN

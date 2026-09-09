@@ -25,4 +25,6 @@ urlpatterns = [
     # -----------------------------
     path('export-racks/', views.export_racks_excel, name='export-racks'),
     path("export-assets/",views.export_assets_excel,name="export-assets"),
+    path("export-metrics/",views.export_metrics_excel,name="export-metrics"),
+
 ]

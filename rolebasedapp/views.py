@@ -539,3 +539,77 @@ def export_assets_excel(request):
                 )
 
     return response
+
+
+def export_metrics_excel(request):
+
+    # Fetch data from ea-racks
+    response = es.search(
+        index="ea-metrics",
+        query={
+            "match_all": {}
+        },
+        size=10000
+    )
+
+    # Extract _source from every document
+    records = [
+        hit["_source"]
+        for hit in response["hits"]["hits"]
+    ]
+
+    # Convert to DataFrame
+    df = pd.DataFrame(records)
+
+    # #  # Drop unwanted columns
+    # df = df.drop( 
+    #     columns=[
+    #     "SR No.",
+    #     "asset_id",
+    #     "timestamp"
+    # ],
+    # errors="ignore")
+
+    #Filter Rack Names floorwise
+
+    
+    # Create Excel response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    response["Content-Disposition"] = (
+        'attachment; filename="ea-metrics.xlsx"'
+    )
+
+    # Create multiple sheets
+    with pd.ExcelWriter(response, engine="openpyxl") as writer:
+
+        # All assets sheet
+        df.to_excel(
+            writer,
+            sheet_name="All Assets",
+            index=False
+        )
+
+        # # Floor-wise sheets
+        # floors = df["Rack"].dropna().str.extract(r"(\d+)F")[0].dropna().unique()
+        # for floor in sorted(floors, key=int):
+
+        #     floor_df = df[
+        #         df["Rack"].str.contains(
+        #             f"{floor}F",
+        #             na=False
+        #         )
+        #     ]
+
+        #     # Create sheet only if records exist
+        #     if not floor_df.empty:
+
+        #         floor_df.to_excel(
+        #             writer,
+        #             sheet_name=f"Floor {floor} Racks",
+        #             index=False
+        #         )
+
+    return response
